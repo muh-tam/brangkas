@@ -37,7 +37,7 @@
     <div id="vault-screen" class="container hidden">
         <h2>Isi Brangkas 🔓</h2>
         <textarea id="note-input" placeholder="Tulis catatan rahasia baru..."></textarea>
-        <button onclick="saveNote()">Simpan ke Cloud</button>
+        <button id="save-btn" onclick="saveNote()">Simpan ke Cloud</button>
         <div id="notes-list"></div>
         <button class="btn-danger" onclick="location.reload()">Kunci & Keluar</button>
     </div>
@@ -88,20 +88,25 @@
     if (!text) return;
 
     if (editId) {
-        // Jika sedang mode edit, update data yang sudah ada
+        // JIKA editId ADA ISINYA: Maka lakukan UPDATE (bukan tambah baru)
         db.ref('brangkas/' + currentPass + '/' + editId).update({
             text: text,
             lastEdit: new Date().toLocaleString('id-ID')
+        }).then(() => {
+            // Setelah berhasil update, kembalikan ke setelan awal
+            editId = null; 
+            document.getElementById('save-btn').innerText = "Simpan ke Cloud";
+            alert("Catatan diperbarui!");
         });
-        editId = null;
-        document.getElementById('save-btn').innerText = "Simpan Catatan";
     } else {
-        // Jika tidak, buat catatan baru (push)
+        // JIKA editId KOSONG: Maka lakukan PUSH (tambah catatan baru)
         db.ref('brangkas/' + currentPass).push({
             text: text,
             date: new Date().toLocaleString('id-ID')
         });
     }
+
+    // Bersihkan kotak input setelah klik tombol
     document.getElementById('note-input').value = '';
 }
 
