@@ -20,6 +20,9 @@
         .note-date { font-size: 11px; color: #94a3b8; margin-bottom: 5px; }
         .delete-btn { position: absolute; top: 10px; right: 10px; background: #ef4444; color: white; border: none; border-radius: 4px; padding: 2px 6px; font-size: 10px; width: auto; }
         .hidden { display: none !important; }
+        .card-actions { display: flex; gap: 8px; justify-content: flex-end; border-top: 1px solid #f1f5f9; padding-top: 8px; margin-top: 10px; }
+        .action-btn { width: auto; padding: 5px 10px; font-size: 12px; font-weight: normal; border: 1px solid #d1d5db; color: #475569; background: #f8fafc; }
+        .action-btn:hover { background: #f1f5f9; color: var(--primary); }
     </style>
 </head>
 <body>
@@ -40,7 +43,7 @@
     </div>
 
     <script>
-        // --- CONFIG FIREBASE ANDA ---
+                // --- CONFIG FIREBASE ANDA ---
            const firebaseConfig = {
   apiKey: "AIzaSyC3M6Me_pBwykr3Y-EAEnJGQlOE3U7fMCo",
   authDomain: "markichat.firebaseapp.com",
@@ -55,7 +58,18 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
         let currentPass = "";
+        let editId = null; 
+        function copyNote(id) {
+        const text = document.getElementById('text-' + id).innerText;
+        navigator.clipboard.writeText(text).then(() => alert("Tersalin!"));
+}
 
+        function prepareEdit(id, oldText) {
+        document.getElementById('note-input').value = oldText;
+        document.getElementById('save-btn').innerText = "Update Catatan";
+        editId = id; // Pastikan variabel let editId sudah ada di luar fungsi
+        window.scrollTo(0,0);
+}
         function handleAuth() {
             const pass = document.getElementById('password-input').value;
             if (!pass) return alert("Password wajib diisi!");
@@ -70,17 +84,26 @@
         }
 
         function saveNote() {
-            const text = document.getElementById('note-input').value.trim();
-            if (!text) return;
+    const text = document.getElementById('note-input').value.trim();
+    if (!text) return;
 
-            // Simpan ke Firebase berdasarkan folder password
-            db.ref('brangkas/' + currentPass).push({
-                text: text,
-                date: new Date().toLocaleString('id-ID')
-            });
-
-            document.getElementById('note-input').value = '';
-        }
+    if (editId) {
+        // Jika sedang mode edit, update data yang sudah ada
+        db.ref('brangkas/' + currentPass + '/' + editId).update({
+            text: text,
+            lastEdit: new Date().toLocaleString('id-ID')
+        });
+        editId = null;
+        document.getElementById('save-btn').innerText = "Simpan Catatan";
+    } else {
+        // Jika tidak, buat catatan baru (push)
+        db.ref('brangkas/' + currentPass).push({
+            text: text,
+            date: new Date().toLocaleString('id-ID')
+        });
+    }
+    document.getElementById('note-input').value = '';
+}
 
         function loadNotes() {
             db.ref('brangkas/' + currentPass).on('value', (snapshot) => {
@@ -91,10 +114,14 @@
                     const n = data[id];
                     list.innerHTML += `
                         <div class="note-card">
-                            <button class="delete-btn" onclick="deleteNote('${id}')">Hapus</button>
-                            <div class="note-date">${n.date}</div>
-                            <div>${n.text}</div>
-                        </div>`;
+        <div class="note-date">${n.date} ${n.lastEdit ? '(Edited)' : ''}</div>
+        <div class="note-text" id="text-${id}">${n.text}</div>
+        <div class="card-actions">
+            <button class="action-btn" onclick="copyNote('${id}')">Copy</button>
+            <button class="action-btn" onclick="prepareEdit('${id}', \`${n.text.replace(/`/g, '\\`')}\`)">Edit</button>
+            <button class="action-btn" onclick="deleteNote('${id}')" style="color:red">Hapus</button>
+        </div>
+    </div>`;
                 }
             });
         }
