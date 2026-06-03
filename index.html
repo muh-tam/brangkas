@@ -1,141 +1,304 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Brangkas Online</title>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
-    <style>
-        :root { --primary: #2563eb; --bg: #f3f4f6; --card: #ffffff; --text: #1f2937; }
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: sans-serif; }
-        body { background-color: var(--bg); color: var(--text); display: flex; justify-content: center; min-height: 100vh; padding: 20px; }
-        .container { background: var(--card); width: 100%; max-width: 400px; border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 15px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.3); }
-        h2 { text-align: center; color: var(--primary); }
-        input, textarea, button { width: 100%; padding: 12px; border: 1px solid #334155; border-radius: 8px; font-size: 16px; background: #ffffff; color: #1e293b; }
-        textarea { resize: vertical; min-height: 100px; }
-        button { background-color: var(--primary); color: white; border: none; cursor: pointer; font-weight: bold; }
-        .btn-danger { background-color: #ef4444; margin-top: 10px; }
-        .note-card { background: #ffffff; border: 1px solid #d1d5db; padding: 15px; border-radius: 8px; margin-top: 10px; position: relative; color: #1e293b; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
-        .note-date { font-size: 11px; color: #94a3b8; margin-bottom: 5px; }
-        .delete-btn { position: absolute; top: 10px; right: 10px; background: #ef4444; color: white; border: none; border-radius: 4px; padding: 2px 6px; font-size: 10px; width: auto; }
-        .hidden { display: none !important; }
-        .card-actions { display: flex; gap: 8px; justify-content: flex-end; border-top: 1px solid #f1f5f9; padding-top: 8px; margin-top: 10px; }
-        .action-btn { width: auto; padding: 5px 10px; font-size: 12px; font-weight: normal; border: 1px solid #d1d5db; color: #475569; background: #f8fafc; }
-        .action-btn:hover { background: #f1f5f9; color: var(--primary); }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Brangkas Online 2.0</title>
+<!-- Script Firebase dari web lama -->
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+<style>
+    /* CSS Desain Baru */
+    * { box-sizing: border-box; font-family: system-ui, sans-serif; }
+    body {
+        background: #0f172a; color: #e2e8f0;
+        margin: 0; padding: 16px; min-height: 100vh;
+    }
+   .container {
+        background: #1e293b; padding: 20px; border-radius: 12px;
+        max-width: 900px; margin: 0 auto; min-height: 90vh;
+    }
+    h1 { font-size: 20px; margin: 0 0 16px; }
+    h3 { font-size: 16px; margin: 0; }
+    input, textarea, button {
+        width: 100%; padding: 10px; border-radius: 8px;
+        border: 1px solid #334155; background: #0f172a;
+        color: #e2e8f0; font-size: 14px; margin-top: 8px;
+    }
+    textarea { min-height: 200px; resize: vertical; }
+    button {
+        background: #3b82f6; border: none; cursor: pointer;
+        font-weight: 600; width: auto; padding: 10px 16px;
+    }
+    button:hover { background: #2563eb; }
+   .btn-danger { background: #ef4444; }
+   .btn-danger:hover { background: #dc2626; }
+   .btn-secondary { background: #475569; }
+   .btn-secondary:hover { background: #334155; }
+   .hidden { display: none; }
+   .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+   .layout { display: grid; grid-template-columns: 250px 1fr; gap: 16px; }
+   .sidebar {
+        border-right: 1px solid #334155; padding-right: 16px;
+        max-height: 70vh; overflow-y: auto;
+    }
+   .note-item {
+        padding: 10px; border-radius: 6px; cursor: pointer;
+        margin-bottom: 6px; background: #0f172a; border: 1px solid #334155;
+    }
+   .note-item.active { background: #334155; border-color: #3b82f6; }
+   .note-item:hover { background: #1e293b; }
+   .note-title { font-weight: 600; font-size: 14px; }
+   .note-preview { font-size: 12px; color: #94a3b8; margin-top: 4px;
+        white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+   .info { font-size: 12px; color: #94a3b8; margin-top: 8px; }
+    @media (max-width: 700px) {
+       .layout { grid-template-columns: 1fr; }
+       .sidebar { border-right: none; border-bottom: 1px solid #334155;
+            padding-right: 0; padding-bottom: 16px; max-height: 200px;
+        }
+    }
+</style>
 </head>
 <body>
 
-    <div id="auth-screen" class="container">
-        <h2>Brangkas Online 🔒</h2>
-        <p style="text-align: center; font-size: 14px;">Masukkan Password untuk Sinkronisasi</p>
-        <input type="password" id="password-input" placeholder="Password Brangkas...">
-        <button onclick="handleAuth()">Buka & Sinkron</button>
+<div class="container">
+    <!-- Halaman Login -->
+    <div id="loginPage">
+        <h1>🔒 Brangkas Online 2.0</h1>
+        <p class="info">Masukkan Password Brangkas kamu untuk membuka teksmu.</p>
+        <input type="password" id="codeInput" placeholder="Password Brangkas..." autocomplete="off">
+        <button id="openBtn">Buka & Sinkron</button>
     </div>
 
-    <div id="vault-screen" class="container hidden">
-        <h2>Isi Brangkas 🔓</h2>
-        <textarea id="note-input" placeholder="Tulis catatan rahasia baru..."></textarea>
-        <button id="save-btn" onclick="saveNote()">Simpan ke Cloud</button>
-        <div id="notes-list"></div>
-        <button class="btn-danger" onclick="location.reload()">Kunci & Keluar</button>
-    </div>
+    <!-- Halaman Notes -->
+    <div id="vaultPage" class="hidden">
+        <div class="header">
+            <h1>Brangkas Terbuka 🔓</h1>
+            <div>
+                <button class="btn-secondary" id="newNoteBtn">+ Catatan Baru</button>
+                <button class="btn-danger" id="lockBtn">Kunci & Keluar</button>
+            </div>
+        </div>
 
-    <script>
-                // --- CONFIG FIREBASE ANDA ---
-           const firebaseConfig = {
-  apiKey: "AIzaSyC3M6Me_pBwykr3Y-EAEnJGQlOE3U7fMCo",
-  authDomain: "markichat.firebaseapp.com",
-  projectId: "markichat",
-  databaseURL: "https://markichat-default-rtdb.asia-southeast1.firebasedatabase.app",
-  storageBucket: "markichat.firebasestorage.app",
-  messagingSenderId: "447816707968",
-  appId: "1:447816707968:web:1ec43ae950702e946e5b65",
-  measurementId: "G-FZBDG67QLV"
+        <div class="layout">
+            <!-- Sidebar daftar catatan -->
+            <div class="sidebar">
+                <h3>Daftar Catatan</h3>
+                <div id="notesList"></div>
+            </div>
+
+            <!-- Editor -->
+            <div class="editor">
+                <input type="text" id="noteTitle" placeholder="Judul catatan (Opsional)">
+                <textarea id="noteContent" placeholder="Tulis isi catatan rahasia di sini..."></textarea>
+                <div style="display: flex; gap: 8px; margin-top: 8px;">
+                    <button id="saveBtn">Simpan ke Cloud</button>
+                    <button class="btn-secondary" id="copyBtn">Salin</button>
+                    <button class="btn-danger" id="deleteBtn">Hapus</button>
+                </div>
+                <p class="info">Pilih catatan di kiri buat edit. Jangan lupa klik Simpan.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// --- CONFIG FIREBASE LAMA ANDA ---
+const firebaseConfig = {
+    apiKey: "AIzaSyC3M6Me_pBwykr3Y-EAEnJGQlOE3U7fMCo",
+    authDomain: "markichat.firebaseapp.com",
+    projectId: "markichat",
+    databaseURL: "https://markichat-default-rtdb.asia-southeast1.firebasedatabase.app",
+    storageBucket: "markichat.firebasestorage.app",
+    messagingSenderId: "447816707968",
+    appId: "1:447816707968:web:1ec43ae950702e946e5b65",
+    measurementId: "G-FZBDG67QLV"
 };
 
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.database();
-        let currentPass = "";
-        let editId = null; 
-        function copyNote(id) {
-        const text = document.getElementById('text-' + id).innerText;
-        navigator.clipboard.writeText(text).then(() => alert("Tersalin!"));
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
+let currentPass = null;
+let currentNoteId = null;
+let notes = [];
+
+const elements = {
+    loginPage: document.getElementById('loginPage'),
+    vaultPage: document.getElementById('vaultPage'),
+    codeInput: document.getElementById('codeInput'),
+    openBtn: document.getElementById('openBtn'),
+    lockBtn: document.getElementById('lockBtn'),
+    newNoteBtn: document.getElementById('newNoteBtn'),
+    saveBtn: document.getElementById('saveBtn'),
+    copyBtn: document.getElementById('copyBtn'),
+    deleteBtn: document.getElementById('deleteBtn'),
+    notesList: document.getElementById('notesList'),
+    noteTitle: document.getElementById('noteTitle'),
+    noteContent: document.getElementById('noteContent')
+};
+
+// Event listeners
+elements.openBtn.addEventListener('click', openVault);
+elements.lockBtn.addEventListener('click', lockVault);
+elements.newNoteBtn.addEventListener('click', newNote);
+elements.saveBtn.addEventListener('click', saveNote);
+elements.copyBtn.addEventListener('click', copyNote);
+elements.deleteBtn.addEventListener('click', deleteNote);
+elements.codeInput.addEventListener('keypress', e => {
+    if (e.key === 'Enter') openVault();
+});
+
+function openVault() {
+    const pass = elements.codeInput.value;
+    if (!pass) return alert('Password wajib diisi!');
+
+    // Mempertahankan sistem btoa (encoding) dari database lama
+    currentPass = btoa(pass); 
+    
+    elements.loginPage.classList.add('hidden');
+    elements.vaultPage.classList.remove('hidden');
+
+    loadNotesFromFirebase();
 }
 
-        function prepareEdit(id, oldText) {
-        document.getElementById('note-input').value = oldText;
-        document.getElementById('save-btn').innerText = "Update Catatan";
-        editId = id; // Pastikan variabel let editId sudah ada di luar fungsi
-        window.scrollTo(0,0);
+function loadNotesFromFirebase() {
+    // Menarik data dari Firebase Database persis seperti script lama
+    db.ref('brangkas/' + currentPass).on('value', (snapshot) => {
+        notes = [];
+        const data = snapshot.val();
+        for (let id in data) {
+            const n = data[id];
+            notes.push({
+                id: id,
+                title: n.title || "", // Support fitur baru 'title'
+                content: n.text || "" // Data dari struktur lama menggunakan 'text'
+            });
+        }
+        
+        // Render ulang ke sidebar
+        renderNotesList();
+
+        // Logika agar tidak selalu loncat ke note pertama saat ngetik/update
+        if (currentNoteId && notes.find(n => n.id === currentNoteId)) {
+            // Tetap di catatan yang sedang diedit
+        } else if (notes.length > 0) {
+            // Buka catatan terbaru/terakhir
+            openNote(notes[notes.length - 1].id);
+        } else {
+            newNote();
+        }
+    });
 }
-        function handleAuth() {
-            const pass = document.getElementById('password-input').value;
-            if (!pass) return alert("Password wajib diisi!");
-            currentPass = btoa(pass); // Encoding sederhana agar password tidak jadi nama folder langsung
-            unlockVault();
-        }
 
-        function unlockVault() {
-            document.getElementById('auth-screen').classList.add('hidden');
-            document.getElementById('vault-screen').classList.remove('hidden');
-            loadNotes();
-        }
+function lockVault() {
+    // Matikan koneksi ke folder brangkas sebelumnya agar aman
+    if(currentPass) db.ref('brangkas/' + currentPass).off();
+    
+    currentPass = null;
+    currentNoteId = null;
+    notes = [];
+    elements.codeInput.value = '';
+    elements.noteTitle.value = '';
+    elements.noteContent.value = '';
+    elements.vaultPage.classList.add('hidden');
+    elements.loginPage.classList.remove('hidden');
+}
 
-        function saveNote() {
-    const text = document.getElementById('note-input').value.trim();
-    if (!text) return;
+function newNote() {
+    currentNoteId = null; // ID kosong menandakan ini data baru (push)
+    elements.noteTitle.value = '';
+    elements.noteContent.value = '';
+    elements.noteTitle.focus();
+    renderNotesList();
+}
 
-    if (editId) {
-        // JIKA editId ADA ISINYA: Maka lakukan UPDATE (bukan tambah baru)
-        db.ref('brangkas/' + currentPass + '/' + editId).update({
+function saveNote() {
+    const title = elements.noteTitle.value.trim();
+    const text = elements.noteContent.value.trim();
+
+    if (!text && !title) return alert('Isi catatan tidak boleh kosong');
+
+    if (currentNoteId) {
+        // UPDATE: Jika catatan sudah ada
+        db.ref('brangkas/' + currentPass + '/' + currentNoteId).update({
+            title: title,
             text: text,
             lastEdit: new Date().toLocaleString('id-ID')
         }).then(() => {
-            // Setelah berhasil update, kembalikan ke setelan awal
-            editId = null; 
-            document.getElementById('save-btn').innerText = "Simpan ke Cloud";
-            alert("Catatan diperbarui!");
+            elements.saveBtn.textContent = 'Diperbarui!';
+            setTimeout(() => elements.saveBtn.textContent = 'Simpan ke Cloud', 1500);
         });
     } else {
-        // JIKA editId KOSONG: Maka lakukan PUSH (tambah catatan baru)
-        db.ref('brangkas/' + currentPass).push({
+        // PUSH: Tambah catatan baru
+        const newNoteRef = db.ref('brangkas/' + currentPass).push();
+        currentNoteId = newNoteRef.key; // Simpan ID baru
+        newNoteRef.set({
+            title: title,
             text: text,
             date: new Date().toLocaleString('id-ID')
+        }).then(() => {
+            elements.saveBtn.textContent = 'Tersimpan!';
+            setTimeout(() => elements.saveBtn.textContent = 'Simpan ke Cloud', 1500);
         });
     }
-
-    // Bersihkan kotak input setelah klik tombol
-    document.getElementById('note-input').value = '';
 }
 
-        function loadNotes() {
-            db.ref('brangkas/' + currentPass).on('value', (snapshot) => {
-                const list = document.getElementById('notes-list');
-                list.innerHTML = "";
-                const data = snapshot.val();
-                for (let id in data) {
-                    const n = data[id];
-                    list.innerHTML += `
-                        <div class="note-card">
-        <div class="note-date">${n.date} ${n.lastEdit ? '(Edited)' : ''}</div>
-        <div class="note-text" id="text-${id}">${n.text}</div>
-        <div class="card-actions">
-            <button class="action-btn" onclick="copyNote('${id}')">Copy</button>
-            <button class="action-btn" onclick="prepareEdit('${id}', \`${n.text.replace(/`/g, '\\`')}\`)">Edit</button>
-            <button class="action-btn" onclick="deleteNote('${id}')" style="color:red">Hapus</button>
-        </div>
-    </div>`;
-                }
-            });
-        }
+function openNote(id) {
+    const note = notes.find(n => n.id === id);
+    if (!note) return;
 
-        function deleteNote(id) {
-            if(confirm("Hapus catatan ini dari cloud?")) {
-                db.ref('brangkas/' + currentPass + '/' + id).remove();
-            }
-        }
-    </script>
+    currentNoteId = id;
+    elements.noteTitle.value = note.title;
+    elements.noteContent.value = note.content;
+    renderNotesList();
+}
+
+function deleteNote() {
+    if (!currentNoteId) return;
+    if (!confirm('Hapus catatan ini dari Cloud Firebase?')) return;
+
+    // Hapus dari database lama
+    db.ref('brangkas/' + currentPass + '/' + currentNoteId).remove().then(() => {
+        currentNoteId = null;
+        elements.noteTitle.value = '';
+        elements.noteContent.value = '';
+    });
+}
+
+function copyNote() {
+    const text = elements.noteContent.value;
+    if (!text) return alert('Tidak ada teks untuk disalin');
+    navigator.clipboard.writeText(text).then(() => alert('Tersalin!'));
+}
+
+function renderNotesList() {
+    elements.notesList.innerHTML = '';
+    if (notes.length === 0) {
+        elements.notesList.innerHTML = '<p class="info">Belum ada catatan di Cloud</p>';
+        return;
+    }
+
+    // Tampilkan catatan lama ke baru secara menurun
+    const reversedNotes = [...notes].reverse();
+
+    reversedNotes.forEach(note => {
+        const div = document.createElement('div');
+        div.className = 'note-item' + (note.id === currentNoteId ? ' active' : '');
+        div.onclick = () => openNote(note.id);
+        
+        // Kompatibilitas untuk catatan lama yang belum punya judul
+        const displayTitle = note.title ? note.title : (note.content ? note.content.substring(0, 20) + "..." : "Tanpa Judul");
+
+        div.innerHTML = `
+            <div class="note-title">${displayTitle}</div>
+            <div class="note-preview">${note.content || 'Kosong'}</div>
+        `;
+        elements.notesList.appendChild(div);
+    });
+}
+</script>
+
 </body>
 </html>
